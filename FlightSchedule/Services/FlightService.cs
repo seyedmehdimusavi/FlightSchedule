@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using static FlightSchedule.model.FlightScheduleContext;
 
-    public interface IFlightService
-    {
-        public int calculateDepartureValues();
-    }
+    //public interface IFlightService
+    //{
+    //    public int calculateDepartureValues();
+    //}
 //==========================================================================================================
 
 public class FlightService
@@ -19,15 +19,15 @@ public class FlightService
     {
         long? departureValue = db.flights.FirstOrDefault(t => t.flight_id == flight_id).departureValue;
         var ifNew = from f in db.flights
-                    where f.airline_id == airline_id && (f.departureValue > (departureValue + 10110)) && (f.departureValue > (departureValue + 10110))
+                    where f.airline_id == airline_id && (f.departureValue > (departureValue - 10110)) && (f.departureValue <= departureValue)
                     select f;
 
         var ifDiscontinued = from f in db.flights
-                             where f.airline_id == airline_id && (f.departureValue > (departureValue - 10110)) && (f.departureValue > (departureValue - 10110))
+                             where f.airline_id == airline_id && (f.departureValue > (departureValue + 10110)) && (f.departureValue >= departureValue)
                              select f;
 
-        if (ifNew.Count() > 0) return "New flights";
-        else if (ifDiscontinued.Count() > 0) return "Discontinued flights";
+        if (ifNew.Count() == 0) return "New flights";
+        else if (ifDiscontinued.Count() == 0) return "Discontinued flights";
         else return "";
     }
 
@@ -74,12 +74,11 @@ public class FlightService
                        departure_time = f.departure_time,
                        arrival_time = f.arrival_time,
                        airline_id = f.airline_id,
-                       status = "" //getStatus(f.flight_id, f.departure_time, f.airline_id)
+                       //status = "" //getStatus(f.flight_id, f.departure_time, f.airline_id)
                    }).ToArray();
 
-        Console.WriteLine(res.Length);
-        
-    
+        Console.WriteLine("Number of Available Flights:{0}",res.Length);
+            
         StringBuilder result = new StringBuilder();
         result.Append("flight_id,origin_city_id,destination_city_id,departure_time,arrival_time,airline_id,status\n");
         foreach (var t in res)
