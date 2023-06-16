@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "9c34bc95-a638-4520-b920-58674e57840d": {
+      "ProjectGuid": "9c34bc95-a638-4520-b920-58674e57840d",
+      "DisplayName": "FlightSchedule",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

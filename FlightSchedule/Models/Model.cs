@@ -20,10 +20,16 @@ namespace FlightSchedule.model
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlServer(@"Data Source=srv-b1-db.dadekavan.lan; Initial Catalog=mehdi_flightS;User Id=Dadekavan; Password=DK#DB10;TrustServerCertificate=True");
+
         }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+
+            // add index for departureValue
+            builder.Entity<flight>().HasIndex(e => e.departureValue).HasName("departureValue").IsUnique();
+
             base.OnModelCreating(builder);
         }
 
@@ -51,7 +57,8 @@ namespace FlightSchedule.model
             public DateTime departure_time { get; set; }
             public DateTime arrival_time { get; set; }
             public int airline_id { get; set; }
-            public Int64? departureValue { get; set; }
+            public Int64 departureValue { get; set; }
+            public string? status { get; set; }
             public ICollection<route>? routes { get; set; }
         }
 

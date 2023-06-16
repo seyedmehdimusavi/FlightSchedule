@@ -15,24 +15,7 @@ public class FlightService
 {
     private readonly FlightScheduleContext db = new FlightScheduleContext();
 
-    public string getStatus(int flight_id, DateTime departure_time, int airline_id)
-    {
-        long? departureValue = db.flights.FirstOrDefault(t => t.flight_id == flight_id).departureValue;
-        var ifNew = from f in db.flights
-                    where f.airline_id == airline_id && (f.departureValue > (departureValue - 10110)) && (f.departureValue <= departureValue + 30)
-                    select f;
-
-        var ifDiscontinued = from f in db.flights
-                             where f.airline_id == airline_id && (f.departureValue > (departureValue + 10110)) && (f.departureValue >= departureValue - 30)
-                             select f;
-
-        if (ifNew.Count() == 0) return "New flights";
-        else if (ifDiscontinued.Count() == 0) return "Discontinued flights";
-        else return "";
-    }
-
-
-    int departureTime2Int(DateTime d)
+   int departureTime2Int(DateTime d)
     {
         int day = d.Day + d.Month * 31 + (d.Year - 2000) * 372;
         int hour = d.Hour * 60 + d.Minute;
@@ -50,6 +33,51 @@ public class FlightService
         }
         return db.SaveChanges();
     }
+
+
+    //public int updateAllStatus()
+    //{
+    //    var flights = db.flights.OrderBy(t => t.departureValue).OrderBy(i => i.airline_id).ToList();
+
+    //    int last_airline_id = -1;
+    //    int last_departurevalue = -1;
+
+    //    for (int i = 1; i < flights.Count - 1; i++)
+    //    {
+    //        if (flights[i].airline_id == last_airline_id)
+    //        {
+    //            long before = flights[i].departureValue - flights[i - 1].departureValue;
+    //            long after = flights[i + 1].departureValue - flights[i].departureValue;
+    //            if (before >= 10110) flights[i].status = "New flights";
+    //            else if (after >= 10110) flights[i].status = "Discontinued flights";
+    //            else flights[i].status = "";
+    //            db.Entry(flights[i]).State = EntityState.Modified;
+    //        }
+    //        else last_airline_id = flights[i].airline_id;
+    //    }
+    //    return db.SaveChanges();
+    //}
+
+
+
+    public bool updateStatus(ref flight[] flights)
+    {
+        int last_airline_id = -1;
+        for (int i = 1; i < flights.Length - 1; i++)
+        {
+            if (flights[i].airline_id == last_airline_id)
+            {
+                long before = flights[i].departureValue - flights[i - 1].departureValue;
+                long after = flights[i + 1].departureValue - flights[i].departureValue;
+                if (before >= 10110) flights[i].status = "New flights";
+                else if (after >= 10110) flights[i].status = "Discontinued flights";
+                else flights[i].status = "";
+            }
+            else last_airline_id = flights[i].airline_id;
+        }
+        return true;
+    }
+
 
 
     public int string2DataTime(string date)
@@ -74,18 +102,25 @@ public class FlightService
                                  departure_time = f.departure_time,
                                  arrival_time = f.arrival_time,
                                  airline_id = f.airline_id,
-                                 //status = "" //getStatus(f.flight_id, f.departure_time, f.airline_id)
                              }).ToArray();
 
         Console.WriteLine("Number of Available Flights:{0}", res.Length);
+        //Console.WriteLine("processing time about {0} minutes", (res.Length / 1000) * 0.3);
 
-        StringBuilder result = new StringBuilder();
-        result.Append("flight_id,origin_city_id,destination_city_id,departure_time,arrival_time,airline_id,status\n");
-        foreach (var t in res)
+        flight[] searchArr = db.flights.Where(t => t.departureValue >= start_date - 10110 && t.departureValue <= end_date + 10110).OrderBy(t => t.departureValue).OrderBy(i => i.airline_id).ToArray();
+        if (updateStatus(ref searchArr))
         {
-            result.Append($"{t.flight_id},{t.origin_city_id},{t.destination_city_id},{t.departure_time},{t.arrival_time},{t.airline_id}, { getStatus(t.flight_id, t.departure_time, t.airline_id)}\n");
+            int k = 0;
+            StringBuilder result = new StringBuilder();
+            result.Append("flight_id,origin_city_id,destination_city_id,departure_time,arrival_time,airline_id,status\n");
+            foreach (var t in res)
+            {
+                k++;
+                if ((k % 100) == 0) { Console.Clear();  Console.Write((int)((k * 100 / res.Length)) + "% "); }
+                result.Append($"{t.flight_id},{t.origin_city_id},{t.destination_city_id},{t.departure_time},{t.arrival_time},{t.airline_id},{ searchArr.FirstOrDefault(s => s.flight_id == t.flight_id).status}\n");
+            }
+            File.WriteAllText("results.csv", result.ToString());
         }
-        File.WriteAllText("results.csv", result.ToString());
     }
 }
 
